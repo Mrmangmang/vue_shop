@@ -8,7 +8,7 @@
 <!--        登录表单-->
         <el-form ref="ruleForm" :model="form" :rules="rules"  class="login_form" label-width="0">
           <el-form-item prop="name">
-            <el-input v-model="form.name" prefix-icon="el-icon-more" ></el-input>
+            <el-input v-model="form.username" prefix-icon="el-icon-more" ></el-input>
           </el-form-item>
           <el-form-item prop="password" >
             <el-input  v-model="form.password" prefix-icon="el-icon-more" ></el-input>
@@ -27,11 +27,11 @@
       data(){
           return{
             form:{
-              name:'admin',
+              username:'admin',
               password:'123456'
             },
             rules:{
-              name: [
+              username: [
                 { required: true, message: '请输入活动名称', trigger: 'blur' },
                 { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
               ],
@@ -44,20 +44,17 @@
       },
       methods:{
             resetForm() {
-              // console.log(this)
               this.$refs.ruleForm.resetFields();
             },
             login(){
-              this.$refs.ruleForm.validate( async valid=>{
-                // console.log(valid)
-                if( !valid) return
-       const {data:res} =  await this.$http.post('login',this.form)
-         // console.log(result)
-                if(res.meta.status !==200 ) return this.$message.error('登录失败')
-                // console.log('登录成功')
-                // this.$message.success('登录成功')
-                this.$message.success('登录成功')
-              })
+             this.$refs.ruleForm.validate( async valid =>{
+               if(!valid) return
+               const {data:res} =  await this.$http.post('login',this.form)
+               if(res.meta.status !==200) return this.$message.error('登录失败')
+               this.$message.success('登录成功')
+               window.sessionStorage.setItem('token',res.data.token)
+               this.$router.push('/home')
+             })
             }
         }
     }
