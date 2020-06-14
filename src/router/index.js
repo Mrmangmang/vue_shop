@@ -14,7 +14,18 @@ const routes = [
   },
   {
     path: '/home',
-    component:()=>import('../components/Home')
+    component:()=>import('../components/Home'),
+    redirect: '/welcome',
+    children:[
+      {
+      path:'/welcome',
+      component:()=>import('../components/Welcome')
+      },
+      {
+        path: '/users',
+        component:()=>import('../components/User')
+      }
+    ]
   }
 
 ]
@@ -30,6 +41,11 @@ router.beforeEach((to,from,next)=>{
   if(!tokenStr) return  next ('/login')
   next()
  })
+// 解决ElementUI导航栏中的vue-router在3.0版本以上重复点菜单报错问题
+const originalPush = VueRouter.prototype.push
+VueRouter.prototype.push = function push(location) {
+  return originalPush.call(this, location).catch(err => err)
+}
 
 
 export default router
