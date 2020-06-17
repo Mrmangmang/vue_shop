@@ -24,6 +24,10 @@ const routes = [
       {
         path: '/users',
         component:()=>import('../components/User')
+      },
+      {
+        path:'/rights',
+        component:()=>import('../components/Right')
       }
     ]
   }
