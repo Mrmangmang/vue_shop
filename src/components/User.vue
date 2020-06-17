@@ -7,28 +7,30 @@
         <el-breadcrumb-item>活动列表</el-breadcrumb-item>
       </el-breadcrumb>
 <!--      卡片视图-->
+<!--      搜索列表-->
       <el-card>
       <el-row :gutter="20">
         <el-col :span="8">
-          <el-input placeholder="请输入内容" >
-            <el-button  slot="append"  icon="el-icon-search"></el-button>
+          <el-input clearable @clear="getUserList" v-model="queryInfo.query" placeholder="请输入内容" >
+            <el-button @click="getUserList"  slot="append"  icon="el-icon-search"></el-button>
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-button>按钮</el-button>
+          <el-button @click="addDialogVisible=true">添加用户</el-button>
         </el-col>
       </el-row>
-      </el-card>
+<!--      用户列表-->
       <el-table   border stripe :data="userList">
         <el-table-column type="index"></el-table-column>
         <el-table-column prop="username" label="姓名"></el-table-column>
         <el-table-column prop="email" label="邮箱"></el-table-column>
         <el-table-column prop="mobile" label="电话"></el-table-column>
         <el-table-column prop="role_name" label="角色"></el-table-column>
-        <el-table-column prop="mg_state" label="状态">
+        <el-table-column  prop="mg_state" label="状态">
           <template v-slot="scope">
             <el-switch
               v-model="scope.row.mg_state"
+              @change="userStateChange(scope.row)"
             >
             </el-switch>
           </template>
@@ -43,12 +45,52 @@
           </template>
         </el-table-column>
       </el-table>
+      <!--      分页区域-->
+      <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="queryInfo.pagenum"
+        :page-sizes="[1, 2, 3, 10]"
+        :page-size="queryInfo.pagesize"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="400">
+      </el-pagination>
+      </el-card>
+      <!--        添加用户对话框-->
+      <el-dialog
+        title="添加用户"
+        :visible.sync="addDialogVisible"
+        width="50%"
+        @close="addDialogVisibleclose"
+       >
+        <!--          内容主体-->
+        <el-form :model="addruleForm" :rules="addrules" ref="addruleFormRef" label-width="100px" class="demo-ruleForm">
+          <el-form-item label="活动名称" prop="username">
+            <el-input v-model="addruleForm.username"></el-input>
+          </el-form-item>
+          <el-form-item label="活动名称" prop="password">
+            <el-input v-model="addruleForm.password"></el-input>
+          </el-form-item>
+          <el-form-item label="活动名称" prop="email">
+            <el-input v-model="addruleForm.email"></el-input>
+          </el-form-item>
+          <el-form-item label="活动名称" prop="mobile">
+            <el-input v-model="addruleForm.mobile"></el-input>
+          </el-form-item>
+        </el-form>
+
+
+        <!--          内容区域-->
+        <span slot="footer" class="dialog-footer">
+    <el-button @click="addDialogVisible = false">取 消</el-button>
+    <el-button type="primary"  @click="addUser">确 定</el-button>
+  </span>
+      </el-dialog>
     </div>
 </template>
 
 <script>
     export default {
-        name: "User",
       data(){
           //获取用户列表的参数对象
         return{
@@ -58,7 +100,32 @@
             pagesize:2
           },
           userList:[],
-          total:0
+          total:0,
+          addDialogVisible:false,
+          addruleForm:{
+            username:'',
+            password:'',
+            email:'',
+            mobile:''
+          },
+          addrules:{
+            username:[
+              { required: true, message: '请输入活动名称', trigger: 'blur' },
+              { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+            ],
+            password:[
+              { required: true, message: '请输入活动名称', trigger: 'blur' },
+              { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+            ],
+            email:[
+              { required: true, message: '请输入活动名称', trigger: 'blur' },
+              { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+            ],
+            mobile:[
+              { required: true, message: '请输入活动名称', trigger: 'blur' },
+              { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+            ]
+          }
         }
       },
       created() {
@@ -69,9 +136,50 @@
             const {data:res}  = await this.$http.get('users',{params:this.queryInfo})
             if(res.meta.status !==200) return  this.$message.error('登录失败')
             this.userList = res.data.users
-            this.total = res.data.total
-            console.log(res)
+            this.total = res.data.totalpage
+            // console.log(res)
+          },
+        handleSizeChange(sizechange){
+            // console.log(sizechange)
+          this.queryInfo.pagesize= sizechange
+          this.getUserList()
+        },
+        handleCurrentChange(currentPages){
+            this.queryInfo.pagenum= currentPages
+            this.getUserList()
+        },
+        // 修改用户状态
+        async userStateChange(userstate) {
+          console.log(userstate)
+          //        this.$http.put(`users/${}/state/:type`)
+          const {data: res} = await this.$http.put(`users/${userstate.id}/state/${userstate.mg_state}`)
+          if(res.meta.status !==200){
+            // console.log(res.data.status)
+            userstate.mg_state = !userstate.mg_state
+            return this.$message.error('更新用户状态失败')
           }
+          this.$message.success('更新用户状态成功')
+        },
+        addDialogVisibleclose(){
+          this.$refs.addruleFormRef.resetFields();
+        },
+        addUser(){
+            this.$refs.addruleFormRef.validate( async valid=>{
+              if(!valid) return
+              //可以发起添加用户的网络请求
+              const {data:res} = await this.$http.post('users',this.addForm)
+              if(res.meta.status!==201){
+                this.$message.error('添加用户失败')
+              }
+              this.$message.success('添加用户成功')
+              //隐藏添加用户对话框
+              this.addDialogVisible = false
+              //重新获取用户列表数据
+              this.getUserList()
+
+
+            })
+        }
       }
     }
 </script>
@@ -83,5 +191,8 @@
   .el-table{
     margin-top: 10px;
     font-size: 10px;
+  }
+  .el-pagination{
+    margin-top: 10px;
   }
 </style>
