@@ -28,6 +28,12 @@ const routes = [
       {
         path:'/rights',
         component:()=>import('../components/Right')
+      },{
+      path:'/goods',
+        component:()=>import('../components/good_list')
+      },{
+        path:'/goods/add',
+        component:()=>import('../components/add')
       }
     ]
   }

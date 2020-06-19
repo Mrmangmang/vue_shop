@@ -37,7 +37,10 @@
         </el-table-column>
         <el-table-column label="操作">
           <template v-slot="scope">
-            <el-button size="mini" type="primary" icon="el-icon-edit"></el-button>
+            <el-button size="mini" type="primary" icon="el-icon-edit"
+            @click="showEditDialog(scope.row.id)"
+            >
+            </el-button>
             <el-button size="mini" type="danger" icon="el-icon-delete"></el-button>
             <el-tooltip class="item" effect="dark" content="细节" placement="top">
               <el-button size="mini" type="danger" icon="el-icon-setting"></el-button>
@@ -78,12 +81,34 @@
             <el-input v-model="addruleForm.mobile"></el-input>
           </el-form-item>
         </el-form>
-
-
         <!--          内容区域-->
         <span slot="footer" class="dialog-footer">
     <el-button @click="addDialogVisible = false">取 消</el-button>
     <el-button type="primary"  @click="addUser">确 定</el-button>
+  </span>
+      </el-dialog>
+<!--      修改用户对话框-->
+      <el-dialog
+        title="修改用户对话框"
+        :visible.sync="editDialogVisible"
+        width="30%"
+        :before-close="handleClose">
+        <el-form ref="editformRef" :model="editForm" :rules="editFormRules" label-width="80px">
+          <el-form-item label="活动名称" prop="">
+            <el-input v-model="editForm.name"></el-input>
+          </el-form-item>
+          <el-form-item label="1" >
+            <el-input v-model="editForm.username"></el-input>
+          </el-form-item>
+          <el-form-item label="2">
+            <el-input v-model="editForm.password"></el-input>
+          </el-form-item>
+        </el-form>
+
+
+        <span slot="footer" class="dialog-footer">
+    <el-button @click="dialogVisible = false">取 消</el-button>
+    <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
   </span>
       </el-dialog>
     </div>
@@ -99,9 +124,12 @@
             pagenum:1,
             pagesize:2
           },
+          editForm:{},
           userList:[],
           total:0,
           addDialogVisible:false,
+          //编辑用户对话框
+          editDialogVisible:false,
           addruleForm:{
             username:'',
             password:'',
@@ -125,6 +153,16 @@
               { required: true, message: '请输入活动名称', trigger: 'blur' },
               { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
             ]
+          },
+          editFormRules:{
+            username:[
+              { required: true, message: '请输入活动名称', trigger: 'blur' },
+              { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+            ],
+            password:[
+              { required: true, message: '请输入活动名称', trigger: 'blur' },
+              { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+            ],
           }
         }
       },
@@ -179,6 +217,15 @@
 
 
             })
+        },
+        //展示编辑用户对话框
+      async  showEditDialog(id){
+           const {data:res}  = await   this.$http.get('users/'+id)
+          if(res.meta.status!==200){
+            return this.$message.error('查询用户信息失败')
+          }
+          this.editForm=res.data
+          this.editDialogVisible = true
         }
       }
     }
